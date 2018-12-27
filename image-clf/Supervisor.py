@@ -1,17 +1,32 @@
 import os
-from src.RandomSearch import RandomModels as rm
+import pickle
+#from src.RandomSearch import RandomModels as rm
+from search_hyperparams import RandomSearch as rm
 import sys
-worker = 'deepnets_classification.py'
+
+
+hm = os.getcwd()
 
 try:
     root = sys.argv[1]
 except:
     root = input("Enter project's root path:")
 
+root = os.path.join(hm,root)
+
 try:
-    n_models = sys.argv[2]
+    n_models = int(sys.argv[2])
 except:
     n_models =int(input("Enter a number of jobs:"))
+
+try:
+    params_path = sys.argv[3]
+except:
+    params_path = input("Enter path to params random_search_params.pickle")
+
+params = os.path.join(hm,params_path)
+
+worker =os.path.join(os.path.dirname(os.path.abspath(__file__)), 'deepnets_classification.py')
 
 folders = os.listdir()
 if root not in folders: os.system('mkdir '+root)
@@ -20,7 +35,12 @@ if root+'/jobs'not in folders: os.system('mkdir '+root+'/jobs')
 if root+'/jobs/config'not in folders: os.system('mkdir '+root+'jobs/config')
 
 #================================Generate Random Models================================#
-rmodels = rm.RandomModels()
+
+f = open(params_path,'rb')
+params = pickle.load(f)
+f.close()
+
+rmodels = rm.RandomModels(**params)
 rmodels.build_configs(n_models,path=root+'/jobs/config')
 
 pipeline_text = open('pipeline.sh','w')
@@ -34,7 +54,7 @@ tensorboard = 'tensorboard --logdir '
 for i in range(n_models):
     os.system('mkdir '+root+'/jobs/job'+str(i).zfill(4))
     os.system('mkdir '+root+'/jobs/job'+str(i).zfill(4)+'/tboard_logs')
-    pipeline+='python '+worker+' '+root+'/jobs/config/config'+str(i).zfill(4)+'.json '+root+'/jobs/job'+str(i).zfill(4)+'| tee -a '+root+'/jobs/job'+str(i).zfill(4)+'/pipeline_log.txt -a pipeline_log.txt;\n'
+    pipeline+='python '+worker+' --params '+root+'/jobs/config/config'+str(i).zfill(4)+'.json --job_root '+root+'/jobs/job'+str(i).zfill(4)+'| tee -a '+root+'/jobs/job'+str(i).zfill(4)+'/pipeline_log.txt -a pipeline_log.txt;\n'
     tensorboard+='job'+str(i).zfill(4)+':'+root+'/jobs/job'+str(i).zfill(4)+'/tboard_logs,' 
 tboard_text.write(tensorboard[:-1]+"\n\n")
 pipeline_text.write(pipeline)

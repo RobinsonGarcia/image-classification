@@ -23,12 +23,23 @@ import os
 import sys
 import json
 import pprint
+import argparse
 
+parser = argparse.ArgumentParser()
 
+parser.add_argument('--params',help='Set the path to the parameter file')
+parser.add_argument('--job_root',help='Set the path to the current job')
 
+arguments = vars(parser.parse_args())
 
+args =json.loads(open(arguments['params']).read())
+job_root = arguments['job_root']
+
+'''
 args=json.loads(open(sys.argv[1]).read())
 job_root = sys.argv[2]
+'''
+
 print("#=====================RandomModel summary: =============================#\n\n")
 pprint.pprint(args)
 print("\n\n#========================Start Trainning============================#\n\n")
@@ -98,7 +109,7 @@ def get_id(x):
 model_id = get_id(args)
 #==================Data Generators=======================#
 
-size = args['img_input_size']
+size = args['img_input_sizes']
 batch_size = args['batch_size']
 
 train_datagen = ImageDataGenerator(
@@ -169,7 +180,7 @@ def get_optimizer(optimizer,lr,decay,momentum,nesterov):
 
 print("#========================== Load Base model and print mode =====================#")
 base_model = get_base_model(args['architecture'])
-base_model = set_mode(args['mode'],base_model)
+base_model = set_mode(args['modes'],base_model)
 
 base_model.summary()
 
@@ -184,7 +195,7 @@ model.add(base_model)
 # Add new blocks/layers
 model.add(Flatten())
 for n in range(args['num_layers']):
-    model.add(Dense(args['dense_layer_size'], activation='relu',
+    model.add(Dense(args['dense_layer_sizes'], activation='relu',
         kernel_regularizer=regularizers.l2(args['reg_rate'])))
     model.add(Dropout(args['dropout']))
 
@@ -195,7 +206,7 @@ model.summary()
 
 
 #==============Define the optimization procedure====================#
-opt = get_optimizer(args['optimizer'],args['learning_rate'],args['decay'],args['momentum'],args['nesterov'])
+opt = get_optimizer(args['optimizers'],args['learning_rate'],args['decay'],args['momentum'],args['nesterov'])
 
 #=========================Compile=====================================#
 model.compile(loss='categorical_crossentropy',optimizer=opt,metrics=['accuracy',Top5,Top3,Top2])
