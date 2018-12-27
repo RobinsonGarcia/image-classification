@@ -110,7 +110,7 @@ if __name__=="__main__":
 
     dframe = get_summary(root,return_dframe=True)
     print('#=========================================================#')
-    hyperpar = str(input('\n\nEnter hyperpar name to compare with val_Top2,val_acc (or hit enter to compare all):')) or ['learning_rate','reg_rate','architecture','optimizer','num_layers','dense_layer_size','dropout']
+    hyperpar = str(input('\n\nEnter hyperpar name to compare with val_Top2,val_acc (or hit enter to compare all):')) or ['learning_rate','reg_rate','architecture','optimizers','num_layers','dense_layer_sizes','dropout']
 
     for h in hyperpar:
         print(h)
