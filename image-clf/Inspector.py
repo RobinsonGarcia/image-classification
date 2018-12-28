@@ -7,7 +7,7 @@ import pprint
 import pandas as pd
 import matplotlib.pyplot as plt
 import sys
-
+from tabulate import tabulate
 
 def format_dict(job0):
     tmp = job0['config']
@@ -42,16 +42,14 @@ def get_summary(root,print_summary=False,return_dframe=False):
                 cols.append(job)
                 os.system('tree '+root+'/jobs/'+job)
                 print("\n#====================Model Summary===================#")
-                print(conf)
+                print(job,conf)
                 print("\n#== Best Accuracy: %f #==val_Top2: %f ==#\n\n"%(job0['val_acc'],job0['val_Top2']))
             except:
                 not_started+=1
     print('Number of jobs started:%d'%(started))
     print('Number of jobs pending:%d'%(not_started))
 
-    dataframe = pd.DataFrame.from_dict(dataframe,orient='index')
-    dataframe.index = cols
-    #dataframe.to_csv('summary.csv')
+    dataframe = pd.DataFrame(dataframe).T
     if print_summary:
         try: print(dataframe)
         except: print("couldn't load a dataframe")
@@ -82,41 +80,37 @@ if __name__=="__main__":
     print('\n#==========================Project tree:====================================#\n')
   
 
-    '''
-    try:
-    	field = sys.argv[2]
-    except:
-        field = input("Enter 'x' field:")
-
-    try:
-        target = sys.argv[3]
-    except:
-        target = input("Enter 'y' value, performance metric:")
-
-    summary_exists = False
-    for file_ in os.listdir():
-        if file_=='summary_'+root+'.csv':
-            print('Summary exists!')
-            summary_exists=True
-            break
-
-    if summary_exists:
-        dframe = pd.read_csv('summary_'+root+'.csv')
-    else:
-        dframe = get_summary(root,return_dframe=True)
-        dframe.to_csv('summary_'+root+'.csv',index=True,index_label=True) 
-
-    '''
-
     dframe = get_summary(root,return_dframe=True)
     print('#=========================================================#')
+    '''
     hyperpar = str(input('\n\nEnter hyperpar name to compare with val_Top2,val_acc (or hit enter to compare all):')) or ['learning_rate','reg_rate','architecture','optimizers','num_layers','dense_layer_sizes','dropout']
+    '''
 
+    '''
     for h in hyperpar:
         print(h)
         visualize(dframe,h,'val_Top2')
         visualize(dframe,h,'val_acc')
+    '''
 
-    #dframe.to_csv('summary_'+root+'.csv',index=True,index_label=True) 
+    sorted_dframe = dframe[['val_acc','val_Top2','learning_rate','reg_rate']].sort_values('val_acc',ascending=False)
+    print(tabulate(sorted_dframe,headers='keys',tablefmt='psql'))
+
+    delete = input('delete least performing jobs? (y/n)')
+    if delete=='y':
+        k = int(input('how many from the best jobs to keep?'))
+        jobs2keep = sorted_dframe.index[:k]
+        print('keep: {}'.format(jobs2keep))
+        jobs2delete = sorted_dframe.index[k:]
+        for job in jobs2delete:
+            if 'job' in job:
+                print('--deleting folder {}'.format(job))
+                os.system('rm -rf '+root+'/jobs/'+job)
 
     
+    dframe = get_summary(root,return_dframe=True)
+    
+    sorted_dframe = dframe[['val_acc','val_Top2','learning_rate','reg_rate']].sort_values('val_acc',ascending=False)
+    print(tabulate(sorted_dframe,headers='keys',tablefmt='psql'))
+
+

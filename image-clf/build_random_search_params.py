@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--save_to',help='Set location to save random_search_params.pickle',default='.')
 arguments = vars(parser.parse_args())
 
-args = {'architecture':['vgg16'],
+args = {'architecture':['vgg16','vgg19','inceptionV3','resnet50'],
 'img_input_sizes':224,
 'modes' : ['fine_tunning','transfer_learning'],
 'num_classes':10,
